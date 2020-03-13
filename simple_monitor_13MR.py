@@ -84,7 +84,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         if key not in dict_estatistica:
             dict_estatistica[key] = []
 
-        # adiciona as estatisticas(value) na lista de fluxos do switch, 
+        # adiciona as estatísticas(value) na lista de fluxos do switch, 
         # na chave criada, ou que já existe    
         dict_estatistica[key].append(value)
 

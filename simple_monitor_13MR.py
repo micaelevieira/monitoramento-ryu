@@ -29,10 +29,10 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         super(SimpleMonitor13, self).__init__(*args, **kwargs)
         self.datapaths = {}
 
-        self.port_stats = {}
+        self.port_stats = {} # estrutura para guardar estatíticas das portas
         self.port_speed = {} # estrutura para medir a velocidade das portas
         
-        self.flow_stats = {}
+        self.flow_stats = {} # estrutura para guardar estatíticas dos fluxos
         self.flow_speed = {} # estrutura para medir a velocidade dos fluxos
 
         # thread para medir as informações sobre portas e fluxos
@@ -66,7 +66,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         while True:
             for dp in self.datapaths.values():
                 self._request_stats(dp)
-            hub.sleep(5)
+            hub.sleep(10)
 
     def _request_stats(self, datapath):
         self.logger.debug('send stats request: %016x', datapath.id)
@@ -108,44 +108,48 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         self.flow_stats.setdefault(dpid, {})
         self.flow_speed.setdefault(dpid, {})
 
-        
 
         # percorrendo lista de statisticas dos flows
         for stat in body:
             # se a prioridade do flow é 1
             if stat.priority:
-                # a chave do flow é uma tupla(porta de entrada, ip destino, porta destino*)
-                key = (stat.match['in_port'],  stat.match.get('eth_dst'),
+                # a chave do flow é uma tupla(porta de entrada, mac destino, porta destino*)
+                key_flow = (stat.match['in_port'], stat.match.get('eth_dst'),
                     stat.instructions[0].actions[0].port)
                 # valor relacionado a chave 
-                value = {
+                value_flow = {
                     "packet_count": stat.packet_count, 
                     "byte_count": stat.byte_count,
                     "duration_sec": stat.duration_sec, 
                     "duration_nsec": stat.duration_nsec
                 }
 
-                # salva a estatísitca de fluxo
-                self.salvar_estatistica(self.flow_stats[dpid], key, value)
+                self.logger.info(">> D-Sec of {}: {}".format(dpid, stat.duration_sec))
 
-                self.logger.info('adicionando {} -> {}'.format(key, value))
+                # salva a estatísitca de fluxo
+                self.salvar_estatistica(self.flow_stats[dpid], key_flow, value_flow)
+
+                self.logger.info('adicionando {} -> {}'.format(key_flow, value_flow))
 
 
                 # calcular estatísticas de velocidade
-                tmp = self.flow_stats[dpid][key]
-                if len(tmp) > 1:
-                    pre_byte_count = tmp[-2]["byte_count"]
-                    curr_byte_count = tmp[-1]["byte_count"]
-                    period = (tmp[-1]["duration_sec"] + tmp[-1]["duration_nsec"] / (10 ** 9)) - (tmp[-2]["duration_sec"] + tmp[-2]["duration_nsec"] / (10 ** 9))
+                tmp_flow = self.flow_stats[dpid][key_flow]
+                if len(tmp_flow) > 1:
+                	# acessa o byte_count da penúltima medição
+                    pre_byte_count = tmp_flow[-2]["byte_count"]
+                    # acessa o byte_count da última medição
+                    curr_byte_count = tmp_flow[-1]["byte_count"]
+                    period = (tmp_flow[-1]["duration_sec"] + tmp_flow[-1]["duration_nsec"] / (10 ** 9)) - \
+                    	(tmp_flow[-2]["duration_sec"] + tmp_flow[-2]["duration_nsec"] / (10 ** 9))
 
                     speed = 0
                     if period != 0:
                         speed = (curr_byte_count - pre_byte_count) / period
 
                     # salva a estatística de velocidade
-                    self.salvar_estatistica(self.flow_speed[dpid], key, speed)
+                    self.salvar_estatistica(self.flow_speed[dpid], key_flow, speed)
 
-                    self.logger.info(">>>> SPEED: {}".format(speed))
+                    self.logger.info(">>>> SPEED: {} B/s".format(speed))
 
 
         '''self.logger.info('datapath         '

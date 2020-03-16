@@ -103,8 +103,6 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         
         #self.logger.info(json.dumps(ev.msg.to_jsondict(),ensure_ascii=True,indent=3,sort_keys=True))
 
-
-
         self.flow_stats.setdefault(dpid, {})
         self.flow_speed.setdefault(dpid, {})
 
@@ -124,18 +122,17 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
                     "duration_nsec": stat.duration_nsec
                 }
 
-                self.logger.info(">> D-Sec of {}: {}".format(dpid, stat.duration_sec))
+                #self.logger.info(">> D-Sec of {}: {}".format(dpid, stat.duration_sec))
 
                 # salva a estatísitca de fluxo
                 self.salvar_estatistica(self.flow_stats[dpid], key_flow, value_flow)
 
-                self.logger.info('adicionando {} -> {}'.format(key_flow, value_flow))
-
+                #self.logger.info('adicionando {} -> {}'.format(key_flow, value_flow))
 
                 # calcular estatísticas de velocidade
                 tmp_flow = self.flow_stats[dpid][key_flow]
                 if len(tmp_flow) > 1:
-                	# acessa o byte_count da penúltima medição
+                    # acessa o byte_count da penúltima medição
                     pre_byte_count = tmp_flow[-2]["byte_count"]
                     # acessa o byte_count da última medição
                     curr_byte_count = tmp_flow[-1]["byte_count"]
@@ -143,22 +140,24 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
                     #acessa o packet count da penúltima medição
                     pre_packet_count = tmp_flow[-2]["packet_count"]
                     #acessa o packet count da última medição
-                    curr_packet_count = tmp_flow[-2]["packet_count"]
+                    curr_packet_count = tmp_flow[-1]["packet_count"]
+                    
+
                     period = (tmp_flow[-1]["duration_sec"] + tmp_flow[-1]["duration_nsec"] / (10 ** 9)) - \
-                    	(tmp_flow[-2]["duration_sec"] + tmp_flow[-2]["duration_nsec"] / (10 ** 9))
+                        (tmp_flow[-2]["duration_sec"] + tmp_flow[-2]["duration_nsec"] / (10 ** 9))
 
                     speed = 0
-                    if period != 0:
-                        speed = (curr_byte_count - pre_byte_count) / period
-
                     speed_packet = 0
                     if period != 0:
-                    	speed_packet = (curr_packet_count - pre_packet_count) / period
+                        speed = (curr_byte_count - pre_byte_count) / period
+                        speed_packet = (curr_packet_count - pre_packet_count) / period
+
 
                     # salva a estatística de velocidade
-                    self.salvar_estatistica(self.flow_speed[dpid], key_flow, speed)
+                    self.salvar_estatistica(self.flow_speed[dpid], key_flow,speed)
 
                     self.salvar_estatistica(self.flow_speed[dpid],key_flow,speed_packet)
+
 
                     self.logger.info(">>>> FLOW SPEED: {} B/s".format(speed))
                     self.logger.info(">>>> FLOW SPEED: {} Pkts/s".format(speed_packet))
@@ -184,6 +183,46 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
         self.logger.info('--------------monitor---------')
         self.logger.info('log  port_stats_reply_handler')
         body = ev.msg.body
+        dpid = ev.msg.datapath.id
+
+        self.port_stats.setdefault(dpid,{})
+        self.port_speed.setdefault(dpid,{})
+
+        for stat in body:
+            port_no = stat.port_no
+            key_port = (dpid,port_no)
+            value_port = {
+                "tx_bytes":stat.tx_bytes,
+                "rx_bytes":stat.rx_bytes,
+                "rx_errors":stat.rx_errors,
+                "tx_errors":stat.tx_errors,
+                "tx_packets":stat.tx_packets,
+                "rx_packets":stat.rx_packets,
+                "duration_sec":stat.duration_sec,
+                "duration_nsec":stat.duration_nsec
+            }
+
+            self.salvar_estatistica(self.port_stats,key_port,value_port)
+
+            pre_tx_bytes= 0
+            tmp_port = self.port_stats[key_port]
+
+            if len(tmp_port) > 1:
+                pre_tx_bytes = tmp_port[-2]["tx_bytes"]
+                curr_tx_bytes = tmp_port[-1]["tx_bytes"]
+               
+                period = (tmp_port[-1]["duration_sec"] + tmp_port[-1]["duration_nsec"] / (10 ** 9)) - \
+                    (tmp_port[-2]["duration_sec"] + tmp_port[-2]["duration_nsec"] / (10 ** 9))
+
+                speed = 0
+                if period!=0:
+                    speed = (curr_tx_bytes - pre_tx_bytes) / period
+
+
+                self.salvar_estatistica(self.port_speed,key_port,speed)
+
+                self.logger.info(">>>>SPEED PORT: {} tx_packets/s in dpid {} in port {}".format(speed,dpid,port_no))
+
 
         '''self.logger.info('datapath         port     '
                          'rx-pkts  rx-bytes rx-error '

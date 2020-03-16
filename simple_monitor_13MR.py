@@ -139,6 +139,11 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
                     pre_byte_count = tmp_flow[-2]["byte_count"]
                     # acessa o byte_count da última medição
                     curr_byte_count = tmp_flow[-1]["byte_count"]
+                    
+                    #acessa o packet count da penúltima medição
+                    pre_packet_count = tmp_flow[-2]["packet_count"]
+                    #acessa o packet count da última medição
+                    curr_packet_count = tmp_flow[-2]["packet_count"]
                     period = (tmp_flow[-1]["duration_sec"] + tmp_flow[-1]["duration_nsec"] / (10 ** 9)) - \
                     	(tmp_flow[-2]["duration_sec"] + tmp_flow[-2]["duration_nsec"] / (10 ** 9))
 
@@ -146,10 +151,17 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
                     if period != 0:
                         speed = (curr_byte_count - pre_byte_count) / period
 
+                    speed_packet = 0
+                    if period != 0:
+                    	speed_packet = (curr_packet_count - pre_packet_count) / period
+
                     # salva a estatística de velocidade
                     self.salvar_estatistica(self.flow_speed[dpid], key_flow, speed)
 
-                    self.logger.info(">>>> SPEED: {} B/s".format(speed))
+                    self.salvar_estatistica(self.flow_speed[dpid],key_flow,speed_packet)
+
+                    self.logger.info(">>>> FLOW SPEED: {} B/s".format(speed))
+                    self.logger.info(">>>> FLOW SPEED: {} Pkts/s".format(speed_packet))
 
 
         '''self.logger.info('datapath         '

@@ -159,7 +159,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
                     self.salvar_estatistica(self.flow_speed[dpid],key_flow,speed_packet)
 
 
-                    self.logger.info(">>>> FLOW SPEED: {} B/s".format(speed))
+                    self.logger.info(">>>> FLOW SPEED: {} B/s in dpid {} in port {}".format(speed,dpid,key_flow))
                     self.logger.info(">>>> FLOW SPEED: {} Pkts/s".format(speed_packet))
 
 
@@ -221,7 +221,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 
                 self.salvar_estatistica(self.port_speed,key_port,speed)
 
-                self.logger.info(">>>>SPEED PORT: {} tx_packets/s in dpid {} in port {}".format(speed,dpid,port_no))
+                self.logger.info(">>>>SPEED PORT: {} tx_bytes/s in dpid {} in port {}".format(speed,dpid,port_no))
 
 
         '''self.logger.info('datapath         port     '

@@ -1,0 +1,5 @@
+Time 6 for 100
+Time 5 for 100
+Time 43 for 1000
+Time 130 for 3000
+Time 215 for 5000

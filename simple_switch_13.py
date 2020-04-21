@@ -68,7 +68,7 @@ class SimpleSwitch13(app_manager.RyuApp):
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
         self.logger.info('------switch---------')
-        self.logger.info('packet_in_handler sw %s enviando msg',ev.msg.datapath.id)
+        #self.logger.info('packet_in_handler sw %s enviando msg',ev.msg.datapath.id)
 
         # If you hit this you might want to increase
         # the "miss_send_length" of your switch
